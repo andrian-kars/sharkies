@@ -6,7 +6,7 @@
 <p align="center">
   Shark, megalodon, and giant-monster films, plus a full movie and series library (The Movie Database API).
   <br>
-  <a href="https://andrian-kars.github.io/sharkies/"><strong>« Explore Sharkies »</strong></a>
+  <a href="https://andrian-kars.com/sharkies"><strong>« Explore Sharkies »</strong></a>
 </p>
 
 ## React / TypeScript / Grid / TMDB API
