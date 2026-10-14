@@ -68,21 +68,16 @@ const genres: Record<string, string> = {
 export const translateGenre = (genre: string, language: Language) =>
   language === "uk"
     ? genres[genre] || genre
-    : Object.entries(genres).find(
-        ([, translated]) => translated === genre,
-      )?.[0] || genre;
+    : Object.entries(genres).find(([, translated]) => translated === genre)?.[0] || genre;
 
 export const isCuratedFilm = (film: Film) =>
   film.mediaType !== "tv" && Boolean(ukrainianFilms[film.id]);
 
 export function localizeFilm(film: Film, language: Language): Film {
   const original = isCuratedFilm(film)
-    ? [...creatureFilms, ...editorPicks].find(
-        (item) => filmKey(item) === filmKey(film),
-      )
+    ? [...creatureFilms, ...editorPicks].find((item) => filmKey(item) === filmKey(film))
     : undefined;
-  const translated =
-    original && language === "uk" ? ukrainianFilms[film.id] : original;
+  const translated = original && language === "uk" ? ukrainianFilms[film.id] : original;
   return {
     ...film,
     ...(translated

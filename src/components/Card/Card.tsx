@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Dialog } from "@mui/material";
 import {
   ArrowUpRight,
@@ -21,6 +22,12 @@ export const Card = (source: Film) => {
   const language = getLanguage();
   const film = useLocalizedFilm(source, language);
   const [open, setOpen] = useState(false);
+  // Safari does not focus a button on click, so the dialog cannot restore focus itself.
+  const trigger = useRef<HTMLButtonElement>(null);
+  const closeDialog = () => {
+    flushSync(() => setOpen(false));
+    trigger.current?.focus();
+  };
   const [imageFailed, setImageFailed] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const { isSaved, toggle } = useWatchlist();
@@ -31,6 +38,7 @@ export const Card = (source: Film) => {
     <article className="film-card">
       <div className="poster-wrap">
         <button
+          ref={trigger}
           className={`poster-button ${showPoster && !imageLoaded ? "is-loading" : ""}`}
           onClick={() => setOpen(true)}
           aria-label={t("card.details", { title: film.title })}
@@ -83,11 +91,10 @@ export const Card = (source: Film) => {
       <p className="film-meta">
         <span>{film.date?.slice(0, 4) || t("card.tba")}</span>
         <span>
-          {film.genres?.[0] ||
-            t(film.mediaType === "tv" ? "card.series" : "card.movie")}
+          {film.genres?.[0] || t(film.mediaType === "tv" ? "card.series" : "card.movie")}
         </span>
       </p>
-      {open && <MovieDialog film={film} onClose={() => setOpen(false)} />}
+      {open && <MovieDialog film={film} onClose={closeDialog} />}
     </article>
   );
 };
@@ -159,13 +166,7 @@ function useLocalizedFilm(source: Film, language: Language): Film {
   return film;
 }
 
-export const MovieDialog = ({
-  film,
-  onClose,
-}: {
-  film: Film;
-  onClose: () => void;
-}) => {
+export const MovieDialog = ({ film, onClose }: { film: Film; onClose: () => void }) => {
   const { t } = useTranslation();
   const language = getLanguage();
   const [details, setDetails] = useState<Details | null>(null);
@@ -209,6 +210,7 @@ export const MovieDialog = ({
   return (
     <Dialog
       open
+      disableRestoreFocus
       onClose={onClose}
       fullWidth
       maxWidth="sm"
@@ -230,9 +232,7 @@ export const MovieDialog = ({
       </div>
       <div className="dialog-body">
         <p className="eyebrow">
-          {t(
-            film.mediaType === "tv" ? "detail.smallScreen" : "detail.bigScreen",
-          )}
+          {t(film.mediaType === "tv" ? "detail.smallScreen" : "detail.bigScreen")}
         </p>
         <h2 id={`film-title-${film.id}`}>
           {details?.title || details?.name || film.title}
@@ -252,9 +252,7 @@ export const MovieDialog = ({
             <span>{t("detail.runtime", { count: details.runtime })}</span>
           ) : null}
           {details?.number_of_seasons ? (
-            <span>
-              {t("detail.seasons", { count: details.number_of_seasons })}
-            </span>
+            <span>{t("detail.seasons", { count: details.number_of_seasons })}</span>
           ) : null}
           {!details && !failed && (
             <span className="text-skeleton meta-skeleton" aria-hidden="true" />
@@ -262,9 +260,7 @@ export const MovieDialog = ({
         </div>
         <p className="detail-genres">
           {(
-            details?.genres?.map((genre) =>
-              translateGenre(genre.name, language),
-            ) ||
+            details?.genres?.map((genre) => translateGenre(genre.name, language)) ||
             film.genres ||
             []
           ).join(" / ")}
@@ -287,10 +283,7 @@ export const MovieDialog = ({
         {failed && (
           <p className="inline-notice" role="status">
             {t("detail.failed")}{" "}
-            <button
-              className="text-button"
-              onClick={() => setAttempt(attempt + 1)}
-            >
+            <button className="text-button" onClick={() => setAttempt(attempt + 1)}>
               {t("common.tryAgain")}
             </button>
           </p>

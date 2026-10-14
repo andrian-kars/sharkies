@@ -8,13 +8,7 @@ import {
   MOVIES_PAGE_PATH,
   TV_PAGE_PATH,
 } from "@/constants";
-import {
-  CreaturesPage,
-  ErrorPage,
-  InitialPage,
-  MoviesPage,
-  TvPage,
-} from "@/pages";
+import { CreaturesPage, ErrorPage, InitialPage, MoviesPage, TvPage } from "@/pages";
 import { Header, Main } from "@/layouts";
 import { useTranslation } from "react-i18next";
 
@@ -49,11 +43,7 @@ export const App = () => {
         <div className="footer-links">
           <Link to="/creatures">{t("nav.creatures")}</Link>
           <Link to="/watchlist">{t("nav.myWatchlist")}</Link>
-          <a
-            href="https://www.themoviedb.org/"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">
             {t("footer.source")} <ArrowUpRight size={13} />
           </a>
         </div>

@@ -22,23 +22,20 @@ export const getCreatureMovies = (
   language: string,
   signal?: AbortSignal,
 ) =>
-  moviesApi.get<ListCardsGeneralData & { results: ApiFilm[] }>(
-    "discover/movie",
-    {
-      params: {
-        ...queries[kind],
-        include_adult: false,
-        sort_by: "primary_release_date.desc",
-        "primary_release_date.lte": new Date().toISOString().slice(0, 10),
-        // Newest-first otherwise surfaces unrated fan films and announcements.
-        "vote_count.gte": 10,
-        page,
-        language,
-      },
-      signal,
-      timeout: 12000,
+  moviesApi.get<ListCardsGeneralData & { results: ApiFilm[] }>("discover/movie", {
+    params: {
+      ...queries[kind],
+      include_adult: false,
+      sort_by: "primary_release_date.desc",
+      "primary_release_date.lte": new Date().toISOString().slice(0, 10),
+      // Newest-first otherwise surfaces unrated fan films and announcements.
+      "vote_count.gte": 10,
+      page,
+      language,
     },
-  );
+    signal,
+    timeout: 12000,
+  });
 
 const PAGE_SIZE = 20;
 const allCreatures = new Map<string, Promise<ApiFilm[]>>();
@@ -63,8 +60,7 @@ export const getAllCreatureMovies = (page: number, language: string) => {
     ]).then(([sharks, titans]) =>
       [...sharks, ...titans]
         .filter(
-          (film, index, all) =>
-            all.findIndex((other) => other.id === film.id) === index,
+          (film, index, all) => all.findIndex((other) => other.id === film.id) === index,
         )
         .sort((first, second) =>
           (second.release_date ?? "").localeCompare(first.release_date ?? ""),

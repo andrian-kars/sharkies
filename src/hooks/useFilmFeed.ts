@@ -57,8 +57,7 @@ export function useFilmFeed(
   }, [requestKey]);
 
   const current = feed?.key === requestKey ? feed : null;
-  const previous =
-    keepPrevious && !current && feed && !feed.failed ? feed : null;
+  const previous = keepPrevious && !current && feed && !feed.failed ? feed : null;
   return {
     loading: Boolean(requestKey) && !current,
     failed: Boolean(current?.failed),

@@ -304,13 +304,7 @@ main {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(
-      90deg,
-      #101410f0 0%,
-      #101410b8 29%,
-      #10141020 65%,
-      #10141008 100%
-    ),
+    linear-gradient(90deg, #101410f0 0%, #101410b8 29%, #10141020 65%, #10141008 100%),
     linear-gradient(0deg, #111211 0%, transparent 40%, #11121112 100%);
 }
 .spotlight-content {
@@ -1305,13 +1299,7 @@ main {
   }
   .spotlight-shade {
     background:
-      linear-gradient(
-        0deg,
-        #111211 0%,
-        #111211e0 25%,
-        #11121173 75%,
-        #11121121
-      ),
+      linear-gradient(0deg, #111211 0%, #111211e0 25%, #11121173 75%, #11121121),
       linear-gradient(90deg, #10141070, transparent);
   }
   .spotlight-content {

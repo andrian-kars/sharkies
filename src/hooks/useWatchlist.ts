@@ -6,9 +6,7 @@ const listeners = new Set<() => void>();
 
 function readFilms(): Film[] {
   try {
-    const stored: unknown = JSON.parse(
-      localStorage.getItem(storageKey) || "[]",
-    );
+    const stored: unknown = JSON.parse(localStorage.getItem(storageKey) || "[]");
     return Array.isArray(stored)
       ? stored.filter(
           (film): film is Film =>
@@ -46,9 +44,7 @@ export function useWatchlist() {
   const isSaved = (film: Film) =>
     current.films.some((saved) => filmKey(saved) === filmKey(film));
   const toggle = (film: Film) => {
-    const exists = snapshot.films.some(
-      (saved) => filmKey(saved) === filmKey(film),
-    );
+    const exists = snapshot.films.some((saved) => filmKey(saved) === filmKey(film));
     const films = exists
       ? snapshot.films.filter((saved) => filmKey(saved) !== filmKey(film))
       : [...snapshot.films, film];

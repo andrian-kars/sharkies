@@ -51,9 +51,7 @@ export const ErrorPage: FC<ErrorPageProps> = ({
         <p className="eyebrow">{errorCode || t("error.intermission")}</p>
         <h1>{title}</h1>
         <p>
-          {getLanguage() === "en" && additionalMessage
-            ? additionalMessage
-            : subTitle}
+          {getLanguage() === "en" && additionalMessage ? additionalMessage : subTitle}
         </p>
         <div className="empty-actions">
           {onRetry && (

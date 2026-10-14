@@ -9,8 +9,7 @@ const LIVE_SEARCH_DELAY = 350;
 const MIN_LIVE_QUERY = 2;
 
 const onSearchPage = () => window.location.pathname.endsWith("/search");
-const currentQuery = () =>
-  new URLSearchParams(window.location.search).get("q") || "";
+const currentQuery = () => new URLSearchParams(window.location.search).get("q") || "";
 
 export const Header = () => {
   const { t, i18n } = useTranslation();
@@ -54,10 +53,7 @@ export const Header = () => {
     window.clearTimeout(pending.current);
     const query = value.trim();
     if (query.length >= MIN_LIVE_QUERY || (!query && onSearchPage()))
-      pending.current = window.setTimeout(
-        () => runSearch(value),
-        LIVE_SEARCH_DELAY,
-      );
+      pending.current = window.setTimeout(() => runSearch(value), LIVE_SEARCH_DELAY);
   };
 
   const submit = (event: FormEvent) => {
@@ -83,9 +79,7 @@ export const Header = () => {
           </NavLink>
           <NavLink
             to="/creatures"
-            className={({ isActive }) =>
-              `creature-nav ${isActive ? "active" : ""}`
-            }
+            className={({ isActive }) => `creature-nav ${isActive ? "active" : ""}`}
           >
             {t("nav.creatures")}
             <span className="nav-dot" />
@@ -93,18 +87,14 @@ export const Header = () => {
           <Link
             to="/movies/popular"
             className={location.pathname.startsWith("/movies/") ? "active" : ""}
-            aria-current={
-              location.pathname.startsWith("/movies/") ? "page" : undefined
-            }
+            aria-current={location.pathname.startsWith("/movies/") ? "page" : undefined}
           >
             {t("nav.movies")}
           </Link>
           <Link
             to="/tv/popular"
             className={location.pathname.startsWith("/tv/") ? "active" : ""}
-            aria-current={
-              location.pathname.startsWith("/tv/") ? "page" : undefined
-            }
+            aria-current={location.pathname.startsWith("/tv/") ? "page" : undefined}
           >
             {t("nav.series")}
           </Link>
@@ -165,15 +155,9 @@ export const Header = () => {
           >
             <Bookmark size={19} />
             <span className="watchlist-label">{t("nav.watchlist")}</span>
-            {films.length > 0 && (
-              <span className="watchlist-count">{films.length}</span>
-            )}
+            {films.length > 0 && <span className="watchlist-count">{films.length}</span>}
           </NavLink>
-          <div
-            className="language-switch"
-            role="group"
-            aria-label={t("language.label")}
-          >
+          <div className="language-switch" role="group" aria-label={t("language.label")}>
             <button
               type="button"
               lang="en"

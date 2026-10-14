@@ -25,11 +25,9 @@ export const en = {
   "home.editorPicks": "Worth your evening.",
   "home.trending": "In the spotlight this week.",
   "home.allMovies": "All movies",
-  "home.feedUnavailable":
-    "Live trends are unavailable. These are our editor's picks.",
+  "home.feedUnavailable": "Live trends are unavailable. These are our editor's picks.",
   "creatures.title": "Big teeth. Bigger trouble.",
-  "creatures.description":
-    "Sharks, ancient predators, and monsters that don't do small.",
+  "creatures.description": "Sharks, ancient predators, and monsters that don't do small.",
   "creatures.explore": "Explore collection",
   "creatures.count": "{{count}} FILMS / NEWEST FIRST",
   "creatures.count_one": "{{count}} FILM / NEWEST FIRST",
@@ -115,8 +113,7 @@ export const en = {
   "detail.trailerLoading": "Loading trailer...",
   "detail.trailerUnavailable": "Trailer unavailable",
   "detail.saved": "Saved",
-  "detail.sessionOnly":
-    "Saved for this session. Browser storage is unavailable.",
+  "detail.sessionOnly": "Saved for this session. Browser storage is unavailable.",
   "detail.source": "More on TMDB",
   "footer.tagline": "For the love of the big screen.",
   "footer.source": "Film data by TMDB",
@@ -155,11 +152,9 @@ export const en = {
   "error.500": "Server error",
   "error.500Description": "There is a specific problem on the server.",
   "error.502": "Gateway error.",
-  "error.502Description":
-    "An invalid response was received from another server.",
+  "error.502Description": "An invalid response was received from another server.",
   "error.503": "The service is unavailable.",
-  "error.503Description":
-    "The server is temporarily unable to process the request.",
+  "error.503Description": "The server is temporarily unable to process the request.",
   "error.unknown": "Something went wrong.",
   "error.unknownDescription":
     "The movie feed could not be loaded. Please try again later.",
@@ -194,16 +189,13 @@ export const uk: Record<keyof typeof en, string> = {
   "home.editorPicks": "Варті вашого вечора.",
   "home.trending": "У центрі уваги цього тижня.",
   "home.allMovies": "Усі фільми",
-  "home.feedUnavailable":
-    "Популярні фільми поки недоступні. Натомість — вибір редакції.",
+  "home.feedUnavailable": "Популярні фільми поки недоступні. Натомість — вибір редакції.",
   "creatures.title": "Великі зуби. Ще більші проблеми.",
-  "creatures.description":
-    "Акули, прадавні хижаки й монстри, які не знають дрібниць.",
+  "creatures.description": "Акули, прадавні хижаки й монстри, які не знають дрібниць.",
   "creatures.explore": "Переглянути добірку",
   "creatures.count": "ФІЛЬМІВ: {{count}} / СПОЧАТКУ НОВІ",
   "creatures.count_one": "ФІЛЬМІВ: {{count}} / СПОЧАТКУ НОВІ",
-  "creatures.feedUnavailable":
-    "Повна добірка зараз недоступна. Натомість — наш вибір.",
+  "creatures.feedUnavailable": "Повна добірка зараз недоступна. Натомість — наш вибір.",
   "creatures.filterLabel": "Тип істот",
   "creatures.all": "Усі істоти",
   "creatures.sharks": "Акули й глибини",
@@ -285,8 +277,7 @@ export const uk: Record<keyof typeof en, string> = {
   "detail.trailerLoading": "Завантаження трейлера...",
   "detail.trailerUnavailable": "Трейлер недоступний",
   "detail.saved": "Збережено",
-  "detail.sessionOnly":
-    "Збережено на час цього сеансу. Сховище браузера недоступне.",
+  "detail.sessionOnly": "Збережено на час цього сеансу. Сховище браузера недоступне.",
   "detail.source": "Докладніше на TMDB",
   "footer.tagline": "З любов’ю до великого екрана.",
   "footer.source": "Дані про фільми від TMDB",
@@ -329,8 +320,7 @@ export const uk: Record<keyof typeof en, string> = {
   "error.503": "Сервіс недоступний.",
   "error.503Description": "Сервер тимчасово не може обробити запит.",
   "error.unknown": "Щось пішло не так.",
-  "error.unknownDescription":
-    "Не вдалося завантажити фільми. Спробуйте пізніше.",
+  "error.unknownDescription": "Не вдалося завантажити фільми. Спробуйте пізніше.",
   "error.intermission": "Антракт",
   "error.back": "Повернутися до добірок",
 };

@@ -144,11 +144,7 @@ export const creatureFilms: (Film & {
   },
 ];
 
-export const featuredFilms = [
-  creatureFilms[0],
-  creatureFilms[1],
-  creatureFilms[6],
-];
+export const featuredFilms = [creatureFilms[0], creatureFilms[1], creatureFilms[6]];
 
 export const editorPicks: Film[] = [
   {
@@ -243,11 +239,7 @@ export type ApiFilm = {
   adult?: boolean;
 };
 
-export const toFilm = (
-  film: ApiFilm,
-  language: "en" | "uk",
-  untitled: string,
-): Film => ({
+export const toFilm = (film: ApiFilm, language: "en" | "uk", untitled: string): Film => ({
   id: film.id,
   title: film.title || film.name || untitled,
   poster: film.poster_path,
@@ -261,5 +253,4 @@ export const toFilm = (
 });
 export const imageUrl = (path: string, size = "w500") =>
   `https://image.tmdb.org/t/p/${size}${path}`;
-export const filmKey = (film: Film) =>
-  `${film.mediaType || "movie"}:${film.id}`;
+export const filmKey = (film: Film) => `${film.mediaType || "movie"}:${film.id}`;

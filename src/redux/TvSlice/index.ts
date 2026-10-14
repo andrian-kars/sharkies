@@ -3,13 +3,7 @@ import { TvData, getTv } from "@/api/tvService";
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getApiLanguage } from "@/i18n";
-import {
-  TvPageType,
-  POPULAR,
-  AIRING_TODAY,
-  ON_TV,
-  TOP_RATED,
-} from "@/constants";
+import { TvPageType, POPULAR, AIRING_TODAY, ON_TV, TOP_RATED } from "@/constants";
 
 interface TvState {
   [POPULAR]: TvData | null;
@@ -95,13 +89,7 @@ export const fetchGetTv =
     }
   };
 
-export const {
-  setPopular,
-  setAiringToday,
-  setOnTv,
-  setTopRated,
-  setLoading,
-  setError,
-} = TvSlice.actions;
+export const { setPopular, setAiringToday, setOnTv, setTopRated, setLoading, setError } =
+  TvSlice.actions;
 
 export default TvSlice.reducer;

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -48,16 +49,8 @@ export const InitialPage = () => {
   const [homeFilter, setHomeFilter] = useState<CreatureFilter>("all");
   const [sort, setSort] = useState("recent");
   const { films: savedFilms, persistent } = useWatchlist();
-  const sharkFeed = useCreatureFeed(
-    "sharks",
-    1,
-    isHome && homeFilter !== "titans",
-  );
-  const titanFeed = useCreatureFeed(
-    "titans",
-    1,
-    isHome && homeFilter !== "sharks",
-  );
+  const sharkFeed = useCreatureFeed("sharks", 1, isHome && homeFilter !== "titans");
+  const titanFeed = useCreatureFeed("titans", 1, isHome && homeFilter !== "sharks");
   const creatureFeeds =
     homeFilter === "sharks"
       ? [sharkFeed]
@@ -74,8 +67,7 @@ export const InitialPage = () => {
         .flatMap((feed) => feed.films)
         .filter(
           (film, index, films) =>
-            films.findIndex((other) => filmKey(other) === filmKey(film)) ===
-            index,
+            films.findIndex((other) => filmKey(other) === filmKey(film)) === index,
         )
         .sort((first, second) => second.date.localeCompare(first.date));
   const trending = useFilmFeed(isHome ? "trending" : null, (signal) =>
@@ -121,11 +113,7 @@ export const InitialPage = () => {
         </div>
         <Link
           className="section-link"
-          to={
-            homeFilter === "all"
-              ? "/creatures"
-              : `/creatures?kind=${homeFilter}`
-          }
+          to={homeFilter === "all" ? "/creatures" : `/creatures?kind=${homeFilter}`}
         >
           {t("creatures.explore")} <ArrowRight size={17} />
         </Link>
@@ -170,10 +158,7 @@ export const InitialPage = () => {
           {savedFilms.length > 0 && (
             <label className="sort-control">
               {t("watchlist.sort")}
-              <select
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-              >
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
                 <option value="recent">{t("watchlist.recent")}</option>
                 <option value="rating">{t("watchlist.rating")}</option>
                 <option value="title">{t("watchlist.alphabetical")}</option>
@@ -212,8 +197,7 @@ export const InitialPage = () => {
             <h1>
               {query ? (
                 <>
-                  {t("search.results")}{" "}
-                  <span className="search-term">"{query}"</span>
+                  {t("search.results")} <span className="search-term">"{query}"</span>
                 </>
               ) : (
                 t("search.prompt")
@@ -354,10 +338,8 @@ export const InitialPage = () => {
             </Link>
           </div>
           <span className="feature-credit">
-            {localizeFilm(creatureFilms[3], language).title.toLocaleUpperCase(
-              language,
-            )}{" "}
-            / 2018
+            {localizeFilm(creatureFilms[3], language).title.toLocaleUpperCase(language)} /
+            2018
           </span>
         </section>
       </div>
@@ -368,11 +350,7 @@ export const InitialPage = () => {
 const LoadingGrid = () => {
   const { t } = useTranslation();
   return (
-    <div
-      className="film-grid"
-      aria-label={t("common.loadingMovies")}
-      aria-busy="true"
-    >
+    <div className="film-grid" aria-label={t("common.loadingMovies")} aria-busy="true">
       {Array.from({ length: 6 }, (_, index) => (
         <CardSkeleton key={index} />
       ))}
@@ -407,13 +385,17 @@ const Spotlight = () => {
   const language = getLanguage();
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const closeDialog = () => {
+    flushSync(() => setOpen(false));
+    trigger.current?.focus();
+  };
   const film = localizeFilm(featuredFilms[active], language);
   const { isSaved, toggle } = useWatchlist();
   const saved = isSaved(film);
   const changeFilm = (direction: number) =>
     setActive(
-      (current) =>
-        (current + direction + featuredFilms.length) % featuredFilms.length,
+      (current) => (current + direction + featuredFilms.length) % featuredFilms.length,
     );
 
   return (
@@ -435,23 +417,17 @@ const Spotlight = () => {
             <>
               {t("spotlight.godzilla")} <span className="title-cross">x</span>{" "}
               {t("spotlight.kong")}{" "}
-              <span className="spotlight-subtitle">
-                {t("spotlight.empire")}
-              </span>
+              <span className="spotlight-subtitle">{t("spotlight.empire")}</span>
             </>
           ) : active === 1 ? (
             <>
               {t("spotlight.meg")}{" "}
-              <span className="spotlight-subtitle">
-                {t("spotlight.trench")}
-              </span>
+              <span className="spotlight-subtitle">{t("spotlight.trench")}</span>
             </>
           ) : (
             <>
               {t("spotlight.pacific")}{" "}
-              <span className="spotlight-subtitle">
-                {t("spotlight.extinct")}
-              </span>
+              <span className="spotlight-subtitle">{t("spotlight.extinct")}</span>
             </>
           )}
         </h1>
@@ -475,6 +451,7 @@ const Spotlight = () => {
         <p className="spotlight-description">{film.overview}</p>
         <div className="spotlight-actions">
           <button
+            ref={trigger}
             className="button button-primary"
             onClick={() => setOpen(true)}
           >
@@ -531,9 +508,7 @@ const Spotlight = () => {
           />
         ))}
       </div>
-      {open && (
-        <MovieDialog key={film.id} film={film} onClose={() => setOpen(false)} />
-      )}
+      {open && <MovieDialog key={film.id} film={film} onClose={closeDialog} />}
     </section>
   );
 };

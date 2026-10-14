@@ -29,10 +29,7 @@ export const MoviesPageContent: FC<MoviesPageContentProps> = ({
     document.title = `${pageTitle} | ${SITE_NAME}`;
   }, [content, currentPage, pageTitle]);
 
-  const handlePageChange = (
-    _event: React.ChangeEvent<unknown>,
-    page: number,
-  ) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     getContent(page);
     window.scrollTo(0, 0);
   };
@@ -53,9 +50,7 @@ export const MoviesPageContent: FC<MoviesPageContentProps> = ({
       </nav>
       <div className="film-grid" aria-busy={isLoading}>
         {isLoading
-          ? Array.from({ length: 12 }, (_, index) => (
-              <CardSkeleton key={index} />
-            ))
+          ? Array.from({ length: 12 }, (_, index) => <CardSkeleton key={index} />)
           : content?.results.map(
               ({
                 id,
@@ -87,9 +82,7 @@ export const MoviesPageContent: FC<MoviesPageContentProps> = ({
         getItemAriaLabel={paginationLabel}
         disabled={isLoading}
         className="catalog-pagination"
-        count={
-          content && content.total_pages > 500 ? 500 : content?.total_pages
-        }
+        count={content && content.total_pages > 500 ? 500 : content?.total_pages}
         page={content?.page || INITIAL_PAGE}
         onChange={handlePageChange}
       />

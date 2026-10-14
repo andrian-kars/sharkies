@@ -10,12 +10,11 @@ import { useCreatureFeed } from "@/hooks/useCreatureFeed";
 import { paginationLabel } from "@/i18n";
 import { SITE_NAME } from "@/constants";
 
-const filters: { value: CreatureFilter; label: string; icon: typeof Layers }[] =
-  [
-    { value: "all", label: "creatures.all", icon: Layers },
-    { value: "sharks", label: "creatures.sharks", icon: Waves },
-    { value: "titans", label: "creatures.titans", icon: Mountain },
-  ];
+const filters: { value: CreatureFilter; label: string; icon: typeof Layers }[] = [
+  { value: "all", label: "creatures.all", icon: Layers },
+  { value: "sharks", label: "creatures.sharks", icon: Waves },
+  { value: "titans", label: "creatures.titans", icon: Mountain },
+];
 
 export const CreatureFilters = ({
   value,
@@ -26,11 +25,7 @@ export const CreatureFilters = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div
-      className="filter-group"
-      role="group"
-      aria-label={t("creatures.filterLabel")}
-    >
+    <div className="filter-group" role="group" aria-label={t("creatures.filterLabel")}>
       {filters.map(({ value: option, label, icon: Icon }) => (
         <button
           key={option}
@@ -48,30 +43,18 @@ export const CreatureFilters = ({
 
 type CreatureFeed = ReturnType<typeof useCreatureFeed>;
 
-const FeedGrid = ({
-  filter,
-  feed,
-}: {
-  filter: CreatureFilter;
-  feed: CreatureFeed;
-}) => {
+const FeedGrid = ({ filter, feed }: { filter: CreatureFilter; feed: CreatureFeed }) => {
   const { t } = useTranslation();
   if (feed.loading)
     return (
-      <div
-        className="film-grid"
-        aria-label={t("common.loadingMovies")}
-        aria-busy="true"
-      >
+      <div className="film-grid" aria-label={t("common.loadingMovies")} aria-busy="true">
         {Array.from({ length: 20 }, (_, index) => (
           <CardSkeleton key={index} />
         ))}
       </div>
     );
   const films = feed.failed
-    ? creatureFilms.filter(
-        (film) => filter === "all" || film.collection === filter,
-      )
+    ? creatureFilms.filter((film) => filter === "all" || film.collection === filter)
     : feed.films;
   return (
     <>
@@ -96,8 +79,7 @@ export const CreaturesPage = () => {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const kind = params.get("kind");
-  const filter: CreatureFilter =
-    kind === "sharks" || kind === "titans" ? kind : "all";
+  const filter: CreatureFilter = kind === "sharks" || kind === "titans" ? kind : "all";
   const page = Math.max(1, Math.min(500, Number(params.get("page")) || 1));
   const feed = useCreatureFeed(filter, page, true);
   // Totals are the same on every page, so keep them while the next page loads.
@@ -139,10 +121,7 @@ export const CreaturesPage = () => {
             </span>
           ) : (
             feed.loading && (
-              <span
-                className="collection-count text-skeleton"
-                aria-hidden="true"
-              />
+              <span className="collection-count text-skeleton" aria-hidden="true" />
             )
           )}
         </div>

@@ -1,145 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { creatureFilms } from "../src/data/catalog";
+import { mockTmdb, results } from "./tmdb-mock";
 
-const results = creatureFilms.slice(0, 6).map((film) => ({
-  id: film.id,
-  title: film.title,
-  name: film.title,
-  poster_path: film.poster,
-  backdrop_path: film.backdrop,
-  release_date: film.date,
-  first_air_date: film.date,
-  vote_average: film.vote,
-  genre_ids: [28, 12],
-  overview: film.overview || "An adventure of extraordinary proportions.",
-  media_type: "movie",
-}));
-
-const creatureTotals = { sharks: 155, titans: 124 };
-const releaseDate = (kind: "sharks" | "titans", position: number) =>
-  new Date(
-    Date.UTC(2026, 6, 1) -
-      (position * 30 + (kind === "titans" ? 15 : 0)) * 86_400_000,
-  )
-    .toISOString()
-    .slice(0, 10);
-
-const discoverPage = (kind: "sharks" | "titans", page: number) => {
-  const curated = creatureFilms.filter((film) => film.collection === kind);
-  const theMeg = creatureFilms.find((film) => film.id === 345940)!;
-  const size = Math.min(20, creatureTotals[kind] - (page - 1) * 20);
-  return Array.from({ length: Math.max(size, 0) }, (_, index) => {
-    const position = (page - 1) * 20 + index;
-    // The Meg is tagged as both a shark and a giant monster on TMDB.
-    const film =
-      kind === "titans" && position === 6 ? theMeg : curated[position];
-    const artwork = curated[position % curated.length];
-    const title =
-      film?.title ??
-      `${kind === "sharks" ? "Shark" : "Monster"} Feature ${position + 1}`;
-    return {
-      id: film?.id ?? (kind === "sharks" ? 700000 : 800000) + position,
-      title,
-      poster_path: artwork.poster,
-      backdrop_path: artwork.backdrop,
-      release_date: releaseDate(kind, position),
-      vote_average: film?.vote ?? 6,
-      genre_ids: [27, 28],
-      overview: film ? "An adventure of extraordinary proportions." : "",
-    };
-  });
-};
-
-test.beforeEach(async ({ page }) => {
-  await page.route("https://api.themoviedb.org/3/**", async (route) => {
-    const url = new URL(route.request().url());
-    const ukrainian = url.searchParams.get("language") === "uk-UA";
-    if (/\/(movie|tv)\/\d+$/.test(url.pathname)) {
-      await route.fulfill({
-        json: {
-          ...(url.pathname.endsWith("/999001")
-            ? { title: ukrainian ? "Океанська подорож" : "Ocean Journey" }
-            : {}),
-          overview: ukrainian
-            ? "Два титани об’єднуються проти прихованої загрози."
-            : "Two titans unite against a hidden threat.",
-          runtime: 115,
-          genres: [{ name: "Action" }, { name: "Adventure" }],
-          videos: {
-            results: [
-              {
-                site: "YouTube",
-                type: "Trailer",
-                official: true,
-                key: "m2u6RfmTXt0",
-                iso_639_1: "en",
-              },
-              ...(ukrainian
-                ? [
-                    {
-                      site: "YouTube",
-                      type: "Trailer",
-                      official: true,
-                      key: "ukrainian-trailer",
-                      iso_639_1: "uk",
-                    },
-                  ]
-                : []),
-            ],
-          },
-        },
-      });
-      return;
-    }
-    if (url.pathname.endsWith("/discover/movie")) {
-      const kind = url.searchParams.get("with_keywords")?.includes("15097")
-        ? "sharks"
-        : "titans";
-      const page = Number(url.searchParams.get("page")) || 1;
-      await route.fulfill({
-        json: {
-          results: discoverPage(kind, page),
-          page,
-          total_pages: Math.ceil(creatureTotals[kind] / 20),
-          total_results: creatureTotals[kind],
-        },
-      });
-      return;
-    }
-    const query = url.searchParams.get("query")?.toLowerCase();
-    const titles = [
-      "Ґодзілла та Конґ: Нова імперія",
-      "Мег 2: Западина",
-      "Конг: Острів черепа",
-      "Мег",
-      "Ґодзілла проти Конґа",
-      "Щелепи",
-    ];
-    const localizedResults = ukrainian
-      ? results.map((film, index) => ({
-          ...film,
-          title: titles[index],
-          name: titles[index],
-        }))
-      : results;
-    const filtered = url.pathname.includes("search")
-      ? [
-          ...localizedResults.filter((film) =>
-            film.title.toLowerCase().includes(query || ""),
-          ),
-          { id: 99, name: "A Person", media_type: "person" },
-        ]
-      : localizedResults;
-    await route.fulfill({
-      json: {
-        results: filtered,
-        page: Number(url.searchParams.get("page")) || 1,
-        total_pages: 3,
-        total_results: 18,
-      },
-    });
-  });
-});
+test.beforeEach(({ page }) => mockTmdb(page));
 
 test("discovery renders real artwork without overlap or overflow", async ({
   page,
@@ -155,8 +17,7 @@ test("discovery renders real artwork without overlap or overflow", async ({
         .evaluate((element) => (element as HTMLImageElement).naturalWidth),
     )
     .toBeGreaterThan(0);
-  const sizes =
-    testInfo.project.name === "mobile" ? [320, 390] : [768, 1440, 1920];
+  const sizes = testInfo.project.name === "mobile" ? [320, 390] : [768, 1440, 1920];
   for (const width of sizes) {
     await page.setViewportSize({ width, height: width < 600 ? 844 : 1000 });
     const layout = await page.evaluate(() => {
@@ -166,9 +27,7 @@ test("discovery renders real artwork without overlap or overflow", async ({
       const controls = document
         .querySelector(".spotlight-bottom")!
         .getBoundingClientRect();
-      const hero = document
-        .querySelector(".spotlight")!
-        .getBoundingClientRect();
+      const hero = document.querySelector(".spotlight")!.getBoundingClientRect();
       return {
         overflow: document.documentElement.scrollWidth > innerWidth,
         separated: actions.bottom < controls.top,
@@ -219,16 +78,14 @@ test("creature collection shows the full paginated shark and monster catalogues"
   await expect(page.getByText("278 FILMS / NEWEST FIRST")).toBeVisible();
   await expect(titles.first()).toHaveText("Meg 2: The Trench");
   await expect(titles.nth(1)).toHaveText("Godzilla x Kong: The New Empire");
-  await expect(
-    page.getByRole("heading", { name: "The Meg", exact: true }),
-  ).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "The Meg", exact: true })).toHaveCount(
+    1,
+  );
   expect(discoverRequests).toHaveLength(15);
   await page.getByRole("button", { name: "Go to page 2", exact: true }).click();
   await expect(page).toHaveURL(/\/creatures\?page=2$/);
   await expect(titles.first()).toHaveText("Monster Feature 11");
-  await page
-    .getByRole("button", { name: "Go to page 14", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Go to page 14", exact: true }).click();
   await expect(page.locator(".film-card")).toHaveCount(18);
   await expect(page.getByText("278 FILMS / NEWEST FIRST")).toBeVisible();
   expect(discoverRequests).toHaveLength(15);
@@ -236,24 +93,24 @@ test("creature collection shows the full paginated shark and monster catalogues"
   await expect(page).toHaveURL(/kind=sharks/);
   await expect(page.locator(".film-card")).toHaveCount(20);
   await expect(page.getByText("155 FILMS / NEWEST FIRST")).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "King Kong", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "King Kong", exact: true })).toHaveCount(
+    0,
+  );
   await page.getByRole("button", { name: "Go to page 2", exact: true }).click();
   await expect(page).toHaveURL(/kind=sharks&page=2/);
   await expect(
     page.getByRole("heading", { name: "Shark Feature 21", exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(
-    page.getByRole("button", { name: "Sharks & deep sea" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect(
-    page.getByRole("button", { name: "page 2", exact: true }),
-  ).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("button", { name: "Sharks & deep sea" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "page 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await page.getByRole("button", { name: "Giant monsters" }).click();
   await expect(page).toHaveURL(/\?kind=titans$/);
   await expect(page.locator(".film-card")).toHaveCount(20);
@@ -261,15 +118,11 @@ test("creature collection shows the full paginated shark and monster catalogues"
   await expect(
     page.getByRole("heading", { name: "King Kong", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toHaveCount(0);
   const sharkRequest = discoverRequests.find((url) =>
     url.searchParams.get("with_keywords")?.includes("324727"),
   );
-  expect(sharkRequest?.searchParams.get("sort_by")).toBe(
-    "primary_release_date.desc",
-  );
+  expect(sharkRequest?.searchParams.get("sort_by")).toBe("primary_release_date.desc");
   expect(sharkRequest?.searchParams.get("vote_count.gte")).toBe("10");
   expect(sharkRequest?.searchParams.get("primary_release_date.lte")).toMatch(
     /^\d{4}-\d{2}-\d{2}$/,
@@ -332,9 +185,7 @@ test("loading shows skeletons for counts, cards, posters, and film details", asy
   images.release();
   await expect(firstPoster).not.toHaveClass(/is-loading/);
 
-  await page
-    .getByRole("button", { name: "View details for Shark Feature 7" })
-    .click();
+  await page.getByRole("button", { name: "View details for Shark Feature 7" }).click();
   const dialog = page.getByRole("dialog", { name: "Shark Feature 7" });
   await expect(dialog.locator(".synopsis-skeleton")).toBeVisible();
   await expect(dialog.locator(".meta-skeleton")).toBeVisible();
@@ -351,13 +202,8 @@ test("Sharkies home features the newest creatures from both collections", async 
 }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/ \| Sharkies$/);
-  await expect(
-    page.getByRole("link", { name: "Sharkies home" }).first(),
-  ).toBeVisible();
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
-    "href",
-    "/favicon.svg",
-  );
+  await expect(page.getByRole("link", { name: "Sharkies home" }).first()).toBeVisible();
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "/favicon.svg");
   expect((await page.request.get("/favicon.svg")).ok()).toBe(true);
   const preview = page.locator(".creature-section .film-card h3");
   await expect(preview).toHaveText([
@@ -378,23 +224,21 @@ test("Sharkies home features the newest creatures from both collections", async 
     "47 Meters Down",
   ]);
   await page.getByRole("button", { name: "Giant monsters" }).click();
-  await expect(
-    page.getByRole("link", { name: "Explore collection" }),
-  ).toHaveAttribute("href", "/creatures?kind=titans");
+  await expect(page.getByRole("link", { name: "Explore collection" })).toHaveAttribute(
+    "href",
+    "/creatures?kind=titans",
+  );
   await page.getByRole("link", { name: "Explore collection" }).click();
-  await expect(
-    page.getByRole("button", { name: "Giant monsters" }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Giant monsters" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(page.locator(".film-card")).toHaveCount(20);
 });
 
-test("watchlist persists, avoids duplicates, and supports removal", async ({
-  page,
-}) => {
+test("watchlist persists, avoids duplicates, and supports removal", async ({ page }) => {
   await page.goto("/creatures?kind=sharks");
-  await page
-    .getByRole("button", { name: "Save Jaws to watchlist", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save Jaws to watchlist", exact: true }).click();
   await expect(
     page.getByRole("link", { name: "My watchlist, 1 saved title" }),
   ).toBeVisible();
@@ -404,9 +248,7 @@ test("watchlist persists, avoids duplicates, and supports removal", async ({
     page.getByRole("heading", { name: "My watchlist 1", level: 1 }),
   ).toBeVisible();
   await page.reload();
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Remove Jaws from watchlist", exact: true })
     .click();
@@ -428,27 +270,30 @@ test("spotlight changes films and opens an accessible detail dialog", async ({
   await page.getByRole("button", { name: "Next featured film" }).click();
   await expect(page.locator(".spotlight-title")).toContainText("Meg 2");
   await page.getByRole("button", { name: "Previous featured film" }).click();
-  await page.getByRole("button", { name: "Explore the film" }).click();
+  const explore = page.getByRole("button", { name: "Explore the film" });
+  // Safari does not focus a button on click, so focus it as a keyboard user would.
+  await explore.focus();
+  await explore.click();
   const dialog = page.getByRole("dialog", {
     name: "Godzilla x Kong: The New Empire",
   });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("115 min")).toBeVisible();
-  await expect(
-    dialog.getByRole("link", { name: "Watch trailer" }),
-  ).toHaveAttribute("href", "https://www.youtube.com/watch?v=m2u6RfmTXt0");
+  await expect(dialog.getByRole("link", { name: "Watch trailer" })).toHaveAttribute(
+    "href",
+    "https://www.youtube.com/watch?v=m2u6RfmTXt0",
+  );
   await dialog.getByRole("button", { name: "Watchlist", exact: true }).click();
   await expect(
     dialog.getByRole("button", { name: "Saved", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Explore the film" }),
-  ).toBeFocused();
-  await expect(
-    page.getByRole("button", { name: "In my watchlist" }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Explore the film" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "In my watchlist" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 test("search returns movies, excludes people, and handles no matches", async ({
@@ -457,27 +302,18 @@ test("search returns movies, excludes people, and handles no matches", async ({
   await page.goto("/");
   if (testInfo.project.name === "mobile")
     await page.getByRole("button", { name: "Open search" }).click();
-  await page
-    .getByRole("searchbox", { name: "Search movies and series" })
-    .fill("Jaws");
-  await page
-    .getByRole("searchbox", { name: "Search movies and series" })
-    .press("Enter");
+  await page.getByRole("searchbox", { name: "Search movies and series" }).fill("Jaws");
+  await page.getByRole("searchbox", { name: "Search movies and series" }).press("Enter");
   await expect(page).toHaveURL(/search\?q=Jaws/);
   await expect(page.locator(".film-card")).toHaveCount(1);
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
   await page.goto("/search?q=no-match");
   await expect(
     page.getByRole("heading", { name: "No matches this time." }),
   ).toBeVisible();
 });
 
-const openSearch = async (
-  page: import("@playwright/test").Page,
-  mobile: boolean,
-) => {
+const openSearch = async (page: import("@playwright/test").Page, mobile: boolean) => {
   if (mobile) await page.getByRole("button", { name: "Open search" }).click();
   return page.getByRole("searchbox", { name: "Search movies and series" });
 };
@@ -494,12 +330,10 @@ test("type to search shows results without pressing Enter", async ({
   await searchbox.pressSequentially("aws ");
   await expect(page).toHaveURL(/\/search\?q=Jaws$/);
   await expect(page.locator(".film-card")).toHaveCount(1);
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Showing" }),
-  ).toHaveText('Showing 1 title for "Jaws"');
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Showing" })).toHaveText(
+    'Showing 1 title for "Jaws"',
+  );
   await expect(searchbox).toHaveValue("Jaws ");
   await expect(searchbox).toBeFocused();
 
@@ -540,14 +374,10 @@ test("type to search keeps previous results while the next query loads", async (
   release();
   await expect(page.locator(".film-grid.is-refreshing")).toHaveCount(0);
   await expect(page.locator(".film-card")).toHaveCount(1);
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
 });
 
-test("leaving mid-typing cancels the pending live search", async ({
-  page,
-}, testInfo) => {
+test("leaving mid-typing cancels the pending live search", async ({ page }, testInfo) => {
   await page.goto("/");
   const searchbox = await openSearch(page, testInfo.project.name === "mobile");
   await searchbox.pressSequentially("Kong");
@@ -572,12 +402,8 @@ test("search never shows the previous feed while new results load", async ({
   await expect(page.locator(".trending-section .film-card")).toHaveCount(6);
   if (testInfo.project.name === "mobile")
     await page.getByRole("button", { name: "Open search" }).click();
-  await page
-    .getByRole("searchbox", { name: "Search movies and series" })
-    .fill("Jaws");
-  await page
-    .getByRole("searchbox", { name: "Search movies and series" })
-    .press("Enter");
+  await page.getByRole("searchbox", { name: "Search movies and series" }).fill("Jaws");
+  await page.getByRole("searchbox", { name: "Search movies and series" }).press("Enter");
   await expect(page).toHaveURL(/search\?q=Jaws/);
   await expect(page.locator(".film-skeleton").first()).toBeVisible();
   await expect(page.locator(".film-card")).toHaveCount(0);
@@ -585,9 +411,7 @@ test("search never shows the previous feed while new results load", async ({
   await expect(page.locator(".film-card")).toHaveCount(1);
 });
 
-test("invalid categories are 404s and failed feeds can be retried", async ({
-  page,
-}) => {
+test("invalid categories are 404s and failed feeds can be retried", async ({ page }) => {
   await page.goto("/movies/nope");
   await expect(
     page.getByRole("heading", { name: "This page was not found." }),
@@ -598,20 +422,14 @@ test("invalid categories are 404s and failed feeds can be retried", async ({
   ).toBeVisible();
 
   for (const [path, endpoint, heading] of [
-    [
-      "/tv/popular",
-      "https://api.themoviedb.org/3/tv/popular**",
-      "Popular TV Shows",
-    ],
+    ["/tv/popular", "https://api.themoviedb.org/3/tv/popular**", "Popular TV Shows"],
     [
       "/movies/upcoming",
       "https://api.themoviedb.org/3/movie/upcoming**",
       "Upcoming Movies",
     ],
   ]) {
-    await page.route(endpoint, (route) =>
-      route.fulfill({ status: 500, json: {} }),
-    );
+    await page.route(endpoint, (route) => route.fulfill({ status: 500, json: {} }));
     await page.goto(path);
     await expect(
       page.getByRole("heading", { name: "Something went wrong." }),
@@ -624,23 +442,18 @@ test("invalid categories are 404s and failed feeds can be retried", async ({
   }
 });
 
-test("movie and series category navigation preserves pagination", async ({
-  page,
-}) => {
+test("movie and series category navigation preserves pagination", async ({ page }) => {
   await page.goto("/movies/popular");
   await expect(page.locator(".film-card")).toHaveCount(6);
   await page.getByRole("link", { name: "Top rated", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Top Rated Movies" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Top Rated Movies" })).toBeVisible();
   await page.getByRole("button", { name: "Go to page 2", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "page 2", exact: true }),
-  ).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("button", { name: "page 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await page.getByRole("link", { name: "Series", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Popular TV Shows" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Popular TV Shows" })).toBeVisible();
   await page.getByRole("link", { name: "Airing today", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "TV Shows Airing Today" }),
@@ -648,9 +461,7 @@ test("movie and series category navigation preserves pagination", async ({
   await expect(page.locator(".film-card")).toHaveCount(6);
 });
 
-test("a feed outage keeps the curated collection available", async ({
-  page,
-}) => {
+test("a feed outage keeps the curated collection available", async ({ page }) => {
   await page.route("**/trending/movie/week**", (route) =>
     route.fulfill({ status: 503, json: {} }),
   );
@@ -658,12 +469,8 @@ test("a feed outage keeps the curated collection available", async ({
   await expect(
     page.getByText("Live trends are unavailable.", { exact: false }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Dune: Part Two" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dune: Part Two" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
   await page.unroute("**/trending/movie/week**");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(
@@ -676,34 +483,23 @@ test("Ukrainian choice persists with collection filters and saved films", async 
   page,
 }) => {
   await page.goto("/creatures?kind=sharks");
-  await page
-    .getByRole("button", { name: "Save Jaws to watchlist", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "УК (Українська)", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save Jaws to watchlist", exact: true }).click();
+  await page.getByRole("button", { name: "УК (Українська)", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await expect(page).toHaveURL(/creatures\?kind=sharks/);
-  await expect(
-    page.getByRole("button", { name: "Акули й глибини" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect(
-    page.getByRole("heading", { name: "Щелепи", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Акули й глибини" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Щелепи", exact: true })).toBeVisible();
   await expect(page).toHaveTitle("Світ монстрів | Sharkies");
-  await page
-    .getByRole("link", { name: "Мій список, збережено: 1", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Мій список, збережено: 1", exact: true }).click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "uk");
   await expect(page.locator(".film-card")).toHaveCount(1);
-  await expect(
-    page.getByRole("heading", { name: "Щелепи", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Щелепи", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "EN (English)", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Jaws", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Jaws", exact: true })).toBeVisible();
   await expect(page.locator(".film-card")).toHaveCount(1);
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -713,9 +509,7 @@ test("Ukrainian typography fits all spotlight slides and detail controls", async
   page,
 }, testInfo) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "УК (Українська)", exact: true })
-    .click();
+  await page.getByRole("button", { name: "УК (Українська)", exact: true }).click();
   await page.evaluate(() => document.fonts.ready);
   const widths =
     testInfo.project.name === "mobile" ? [320, 390] : [768, 1024, 1440, 1920];
@@ -728,10 +522,8 @@ test("Ukrainian typography fits all spotlight slides and detail controls", async
         return {
           overflow: document.documentElement.scrollWidth > innerWidth,
           heroSeparated:
-            bounds(".spotlight-actions").bottom <
-            bounds(".spotlight-bottom").top,
-          headerSeparated:
-            bounds(".brand").right <= bounds(".header-actions").left,
+            bounds(".spotlight-actions").bottom < bounds(".spotlight-bottom").top,
+          headerSeparated: bounds(".brand").right <= bounds(".header-actions").left,
           navigationFits:
             bounds(".primary-nav").bottom <= bounds(".site-header").bottom + 1,
           titleFits:
@@ -746,9 +538,7 @@ test("Ukrainian typography fits all spotlight slides and detail controls", async
         navigationFits: true,
         titleFits: true,
       });
-      await page
-        .getByRole("button", { name: "Наступний рекомендований фільм" })
-        .click();
+      await page.getByRole("button", { name: "Наступний рекомендований фільм" }).click();
     }
   }
   await page.setViewportSize(
@@ -765,15 +555,11 @@ test("Ukrainian typography fits all spotlight slides and detail controls", async
     dialog.getByText("Два титани об’єднуються проти прихованої загрози."),
   ).toBeVisible();
   await expect(dialog.getByText("115 хв", { exact: true })).toBeVisible();
-  await expect(
-    dialog.getByRole("link", { name: "Дивитися трейлер" }),
-  ).toHaveAttribute(
+  await expect(dialog.getByRole("link", { name: "Дивитися трейлер" })).toHaveAttribute(
     "href",
     "https://www.youtube.com/watch?v=ukrainian-trailer",
   );
-  await page
-    .getByRole("button", { name: "Закрити відомості про фільм" })
-    .click();
+  await page.getByRole("button", { name: "Закрити відомості про фільм" }).click();
   await page.goto("/creatures");
   await expect(
     page.getByRole("heading", { name: "Великі зуби. Ще більші проблеми." }),
@@ -803,9 +589,7 @@ test("Ukrainian switching refreshes movie and series metadata without duplicatin
   await expect(
     page.getByRole("heading", { name: "Ocean Journey", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "УК (Українська)", exact: true })
-    .click();
+  await page.getByRole("button", { name: "УК (Українська)", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Океанська подорож", exact: true }),
   ).toBeVisible();
@@ -825,9 +609,7 @@ test("Ukrainian switching refreshes movie and series metadata without duplicatin
   await expect(
     page.getByRole("heading", { name: "Ocean Journey", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "УК (Українська)", exact: true })
-    .click();
+  await page.getByRole("button", { name: "УК (Українська)", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Популярні серіали", exact: true }),
   ).toBeVisible();
@@ -843,26 +625,18 @@ test("Ukrainian search and missing-page messages are translated", async ({
   page,
 }, testInfo) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "УК (Українська)", exact: true })
-    .click();
+  await page.getByRole("button", { name: "УК (Українська)", exact: true }).click();
   if (testInfo.project.name === "mobile")
     await page.getByRole("button", { name: "Відкрити пошук" }).click();
-  await page
-    .getByRole("searchbox", { name: "Пошук фільмів і серіалів" })
-    .fill("Щелепи");
+  await page.getByRole("searchbox", { name: "Пошук фільмів і серіалів" }).fill("Щелепи");
   const request = page.waitForRequest(
     (request) =>
       request.url().includes("search/multi") &&
       new URL(request.url()).searchParams.get("language") === "uk-UA",
   );
-  await page
-    .getByRole("searchbox", { name: "Пошук фільмів і серіалів" })
-    .press("Enter");
+  await page.getByRole("searchbox", { name: "Пошук фільмів і серіалів" }).press("Enter");
   await request;
-  await expect(
-    page.getByRole("heading", { name: "Щелепи", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Щелепи", exact: true })).toBeVisible();
   await page.goto("/search?q=no-match");
   await expect(
     page.getByRole("heading", { name: "Цього разу нічого не знайшлося." }),
@@ -882,4 +656,34 @@ test.describe("Ukrainian browser preference", () => {
       page.getByRole("button", { name: "УК (Українська)", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
   });
+});
+
+test("publishes social metadata with a correctly sized share image", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+  const meta = (selector: string) => page.locator(selector).getAttribute("content");
+  expect(await meta('meta[property="og:site_name"]')).toBe("Sharkies");
+  expect(await meta('meta[name="twitter:card"]')).toBe("summary_large_image");
+  const image = await meta('meta[property="og:image"]');
+  expect(image).toBe("https://andrian-kars.com/sharkies/og-image.png");
+  expect(await meta('meta[name="twitter:image"]')).toBe(image);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    "href",
+    "/apple-touch-icon.png",
+  );
+  for (const [path, width, height] of [
+    ["/og-image.png", 1200, 630],
+    ["/apple-touch-icon.png", 180, 180],
+  ] as const) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(200);
+    const bytes = await response.body();
+    expect(bytes.subarray(1, 4).toString(), path).toBe("PNG");
+    expect([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], path).toEqual([
+      width,
+      height,
+    ]);
+  }
 });

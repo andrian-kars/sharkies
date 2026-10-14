@@ -3,13 +3,7 @@ import { MoviesData, getMovies } from "@/api/moviesService";
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
 import { getApiLanguage } from "@/i18n";
-import {
-  MoviesPageType,
-  POPULAR,
-  NOW_PLAYING,
-  UPCOMING,
-  TOP_RATED,
-} from "@/constants";
+import { MoviesPageType, POPULAR, NOW_PLAYING, UPCOMING, TOP_RATED } from "@/constants";
 
 interface MovieState {
   [POPULAR]: MoviesData | null;

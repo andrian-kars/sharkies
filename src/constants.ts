@@ -10,16 +10,10 @@ export const AIRING_TODAY = "airing-today";
 export const ON_TV = "on_the_air";
 
 export type MoviesPageType =
-  | typeof POPULAR
-  | typeof NOW_PLAYING
-  | typeof UPCOMING
-  | typeof TOP_RATED;
+  typeof POPULAR | typeof NOW_PLAYING | typeof UPCOMING | typeof TOP_RATED;
 
 export type TvPageType =
-  | typeof POPULAR
-  | typeof AIRING_TODAY
-  | typeof ON_TV
-  | typeof TOP_RATED;
+  typeof POPULAR | typeof AIRING_TODAY | typeof ON_TV | typeof TOP_RATED;
 
 // Paths
 export const INITIAL_PAGE_PATH = "/";

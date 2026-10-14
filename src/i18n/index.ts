@@ -19,10 +19,7 @@ i18n.on("languageChanged", (language: string) => {
   document.documentElement.lang = language;
   document
     .querySelector('meta[name="description"]')
-    ?.setAttribute(
-      "content",
-      (language === "uk" ? uk : en)["meta.description"],
-    );
+    ?.setAttribute("content", (language === "uk" ? uk : en)["meta.description"]);
   try {
     localStorage.setItem(storageKey, language);
   } catch {
@@ -39,15 +36,9 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-export const getLanguage = (): Language =>
-  i18n.resolvedLanguage === "uk" ? "uk" : "en";
-export const getApiLanguage = () =>
-  getLanguage() === "uk" ? "uk-UA" : "en-US";
-export const paginationLabel = (
-  type: string,
-  page: number | null,
-  selected: boolean,
-) =>
+export const getLanguage = (): Language => (i18n.resolvedLanguage === "uk" ? "uk" : "en");
+export const getApiLanguage = () => (getLanguage() === "uk" ? "uk-UA" : "en-US");
+export const paginationLabel = (type: string, page: number | null, selected: boolean) =>
   i18n.t(
     type === "page"
       ? selected
