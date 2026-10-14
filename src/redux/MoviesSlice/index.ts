@@ -2,6 +2,7 @@ import { getApiErrorMessage } from "@/api/config";
 import { MoviesData, getMovies } from "@/api/moviesService";
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
+import { getApiLanguage } from "@/i18n";
 import {
   MoviesPageType,
   POPULAR,
@@ -32,6 +33,7 @@ export const moviesSlice = createSlice({
   name: "movies",
   initialState,
   reducers: {
+    resetLanguage: () => initialState,
     setPopular: (state, action: PayloadAction<MoviesData>) => {
       state[POPULAR] = action.payload;
       state.isLoading = false;
@@ -54,18 +56,22 @@ export const moviesSlice = createSlice({
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
+      if (action.payload) state.error = null;
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
+      state.isLoading = false;
     },
   },
 });
 
 export const fetchGetMovies =
   (type: MoviesPageType, page: number) => async (dispatch: Dispatch) => {
+    const language = getApiLanguage();
     try {
       dispatch(moviesSlice.actions.setLoading(true));
-      const fetchedMovies = await getMovies(type, page);
+      const fetchedMovies = await getMovies(type, page, language);
+      if (language !== getApiLanguage()) return;
 
       switch (type) {
         case POPULAR:
@@ -82,6 +88,7 @@ export const fetchGetMovies =
           break;
       }
     } catch (e) {
+      if (language !== getApiLanguage()) return;
       const errorMessage = getApiErrorMessage(e);
 
       dispatch(moviesSlice.actions.setError(errorMessage));

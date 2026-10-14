@@ -1,15 +1,12 @@
 import { TvData } from "@/api/tvService";
 import { Card, CardSkeleton } from "@/components";
-import {
-  INITIAL_PAGE,
-  TvPageType,
-  AIRING_TODAY,
-  POPULAR,
-  TOP_RATED,
-  ON_TV,
-} from "@/constants";
-import { Box, Pagination, Typography } from "@mui/material";
+import { INITIAL_PAGE, SITE_NAME, TvPageType } from "@/constants";
+import { Pagination } from "@mui/material";
 import { FC, useEffect } from "react";
+import { NavLink } from "react-router-dom";
+import { getGenreNames } from "@/data/catalog";
+import { useTranslation } from "react-i18next";
+import { getLanguage, paginationLabel } from "@/i18n";
 
 type TvPageContentProps = {
   currentPage: TvPageType;
@@ -24,64 +21,79 @@ export const TvPageContent: FC<TvPageContentProps> = ({
   content,
   getContent,
 }) => {
-  let pageTitle = "";
-
-  switch (currentPage) {
-    case POPULAR:
-      pageTitle = "Popular TV Shows";
-      break;
-    case AIRING_TODAY:
-      pageTitle = "TV Shows Airing Today";
-      break;
-    case ON_TV:
-      pageTitle = "Currently On TV Shows";
-      break;
-    case TOP_RATED:
-      pageTitle = "Top Rated TV Shows";
-      break;
-  }
+  const { t } = useTranslation();
+  const pageTitle = t(`tv.${currentPage}`);
 
   useEffect(() => {
     !content && getContent(INITIAL_PAGE);
-    document.title = pageTitle;
-  }, [content]);
+    document.title = `${pageTitle} | ${SITE_NAME}`;
+  }, [content, currentPage, pageTitle]);
 
-  // @ts-ignore
-  const handlePageChange = (e: React.ChangeEvent<unknown>, page: number) => {
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    page: number,
+  ) => {
     getContent(page);
     window.scrollTo(0, 0);
   };
 
   return (
-    <>
-      <Typography variant="h4" pb={2}>
-        {pageTitle}
-      </Typography>
-      <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
+    <div className="page-container browse-page">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">{t("tv.eyebrow")}</p>
+          <h1>{pageTitle}</h1>
+        </div>
+      </div>
+      <nav className="category-nav" aria-label={t("tv.categories")}>
+        <NavLink to="/tv/popular">{t("category.popular")}</NavLink>
+        <NavLink to="/tv/airing-today">{t("category.airingToday")}</NavLink>
+        <NavLink to="/tv/on_the_air">{t("category.onTv")}</NavLink>
+        <NavLink to="/tv/top-rated">{t("category.topRated")}</NavLink>
+      </nav>
+      <div className="film-grid" aria-busy={isLoading}>
         {isLoading
-          ? [...Array(20)].map((num, i) => <CardSkeleton key={`${num}-${i}`} />)
+          ? Array.from({ length: 12 }, (_, index) => (
+              <CardSkeleton key={index} />
+            ))
           : content?.results.map(
-              ({ name, poster_path, first_air_date, vote_average }) => (
+              ({
+                id,
+                name,
+                poster_path,
+                backdrop_path,
+                overview,
+                genre_ids,
+                first_air_date,
+                vote_average,
+              }) => (
                 <Card
-                  key={name}
+                  key={id}
+                  id={id}
+                  language={getLanguage()}
+                  genres={getGenreNames(genre_ids)}
+                  mediaType="tv"
+                  backdrop={backdrop_path}
+                  overview={overview}
                   poster={poster_path}
                   title={name}
                   date={first_air_date}
                   vote={vote_average}
                 />
-              )
+              ),
             )}
-      </Box>
+      </div>
       <Pagination
+        aria-label={t("pagination.label")}
+        getItemAriaLabel={paginationLabel}
         disabled={isLoading}
-        sx={{ pt: 4, margin: "0 auto" }}
-        size="large"
+        className="catalog-pagination"
         count={
           content && content.total_pages > 500 ? 500 : content?.total_pages
         }
         page={content?.page || INITIAL_PAGE}
         onChange={handlePageChange}
       />
-    </>
+    </div>
   );
 };

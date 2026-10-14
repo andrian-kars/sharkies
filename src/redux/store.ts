@@ -1,13 +1,19 @@
 import { configureStore } from "@reduxjs/toolkit";
-import movieSlice from "./MoviesSlice";
+import movieSlice, { moviesSlice } from "./MoviesSlice";
 import { useDispatch } from "react-redux";
-import TvSlice from "./TvSlice";
+import tvReducer, { TvSlice } from "./TvSlice";
+import i18n from "@/i18n";
 
 export const store = configureStore({
   reducer: {
     movies: movieSlice,
-    tv: TvSlice,
+    tv: tvReducer,
   },
+});
+
+i18n.on("languageChanged", () => {
+  store.dispatch(moviesSlice.actions.resetLanguage());
+  store.dispatch(TvSlice.actions.resetLanguage());
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

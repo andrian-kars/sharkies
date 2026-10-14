@@ -1,4 +1,5 @@
 export const INITIAL_PAGE = 1;
+export const SITE_NAME = "Sharkies";
 
 // pages
 export const POPULAR = "popular";

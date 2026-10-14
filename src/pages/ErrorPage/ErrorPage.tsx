@@ -6,80 +6,69 @@ import {
   ERROR_CODE_502,
   ERROR_CODE_503,
   INITIAL_PAGE_PATH,
+  SITE_NAME,
 } from "@/constants";
-import { Box, Button, Typography } from "@mui/material";
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight, Clapperboard } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { getLanguage } from "@/i18n";
 
 type ErrorPageProps = {
   errorCode?: number;
   additionalMessage?: string;
+  onRetry?: () => void;
 };
 
 export const ErrorPage: FC<ErrorPageProps> = ({
   errorCode,
   additionalMessage,
+  onRetry,
 }) => {
-  let title, subTitle;
-
-  switch (errorCode) {
-    case ERROR_CODE_400:
-      title = "Invalid request.";
-      subTitle = "The server cannot process your request.";
-      break;
-    case ERROR_CODE_403:
-      title = "Forbidden.";
-      subTitle = "Access to the resource is restricted.";
-      break;
-    case ERROR_CODE_404:
-      title = "This page was not found.";
-      subTitle = "The requested page does not exist.";
-      break;
-    case ERROR_CODE_500:
-      title = "Server error";
-      subTitle = "There is a specific problem on the server.";
-      break;
-    case ERROR_CODE_502:
-      title = "Gateway error.";
-      subTitle = "An invalid response was received from another server.";
-      break;
-    case ERROR_CODE_503:
-      title = "The service is unavailable.";
-      subTitle = "The server is temporarily unable to process the request.";
-      break;
-    default:
-      title = "Unknown error.";
-      subTitle = "An unknown error occurred.";
-  }
+  const { t } = useTranslation();
+  const key =
+    errorCode &&
+    [
+      ERROR_CODE_400,
+      ERROR_CODE_403,
+      ERROR_CODE_404,
+      ERROR_CODE_500,
+      ERROR_CODE_502,
+      ERROR_CODE_503,
+    ].includes(errorCode)
+      ? String(errorCode)
+      : "unknown";
+  const title = t(`error.${key}`);
+  const subTitle = t(`error.${key}Description`);
+  useEffect(() => {
+    document.title = `${title} | ${SITE_NAME}`;
+  }, [title]);
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      gap={1.5}
-      justifyContent="center"
-      alignItems="center"
-    >
-      <Typography variant="h3">{errorCode}</Typography>
-      <Typography variant="h4">{title}</Typography>
-      {additionalMessage && (
-        <Typography variant="h4" fontStyle="italic" mb={2}>
-          {additionalMessage}
-        </Typography>
-      )}
-      <Typography variant="h5" fontStyle="italic" mb={2}>
-        {subTitle}
-      </Typography>
-      <Button
-        component={Link}
-        to={INITIAL_PAGE_PATH}
-        size="large"
-        variant="outlined"
-      >
-        <Typography variant="h5" fontSize={16}>
-          Go back to initial page
-        </Typography>
-      </Button>
-    </Box>
+    <div className="page-container browse-page">
+      <div className="empty-state">
+        <Clapperboard size={36} />
+        <p className="eyebrow">{errorCode || t("error.intermission")}</p>
+        <h1>{title}</h1>
+        <p>
+          {getLanguage() === "en" && additionalMessage
+            ? additionalMessage
+            : subTitle}
+        </p>
+        <div className="empty-actions">
+          {onRetry && (
+            <button className="button button-primary" onClick={onRetry}>
+              {t("common.tryAgain")}
+            </button>
+          )}
+          <Link
+            className={`button ${onRetry ? "button-secondary" : "button-primary"}`}
+            to={INITIAL_PAGE_PATH}
+          >
+            {t("error.back")} <ArrowRight size={17} />
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };

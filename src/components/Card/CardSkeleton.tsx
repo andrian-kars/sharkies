@@ -1,6 +1,12 @@
-import { Skeleton } from "@mui/material";
-import { memo } from "react";
+import { useTranslation } from "react-i18next";
 
-export const CardSkeleton = memo(() => (
-  <Skeleton width={200} height={400} variant="rectangular" />
-));
+export const CardSkeleton = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="film-skeleton" aria-label={t("common.loadingMovie")}>
+      <div />
+      <span />
+      <span />
+    </div>
+  );
+};

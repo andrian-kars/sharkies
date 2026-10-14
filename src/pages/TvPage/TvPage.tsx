@@ -1,9 +1,10 @@
-import { fetchGetTv } from "@/redux/TvSlice";
+import { fetchGetTv, setLoading } from "@/redux/TvSlice";
 import { RootState, useAppDispatch } from "@/redux/store";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { TvPageContent } from "./TvPageContent";
 import {
+  ERROR_CODE_404,
   TvPageType,
   AIRING_TODAY,
   POPULAR,
@@ -21,8 +22,8 @@ export const TvPage = () => {
   const state = useSelector((state: RootState) => state.tv);
   const { isLoading, error } = state;
 
-  if (!params.page || !ARR_OF_PAGES.includes(params.page) || error) {
-    return <ErrorPage additionalMessage={error || "Wrong page path"} />;
+  if (!params.page || !ARR_OF_PAGES.includes(params.page)) {
+    return <ErrorPage errorCode={ERROR_CODE_404} />;
   }
 
   const currentPage = params.page as TvPageType;
@@ -31,6 +32,18 @@ export const TvPage = () => {
   const getContent = (page: number) => {
     dispatch(fetchGetTv(currentPage, page));
   };
+
+  if (error) {
+    return (
+      <ErrorPage
+        additionalMessage={error}
+        onRetry={() =>
+          // Without cached content, clearing the error lets the page's mount effect fetch it.
+          content ? getContent(content.page) : dispatch(setLoading(true))
+        }
+      />
+    );
+  }
 
   return (
     <TvPageContent

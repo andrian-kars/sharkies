@@ -1,5 +1,6 @@
 import { ListCardsGeneralData, moviesApi } from "@/api/config";
 import { INITIAL_PAGE, MoviesPageType } from "@/constants";
+import { getApiLanguage } from "@/i18n";
 
 export interface MoviesData extends ListCardsGeneralData {
   results: Array<{
@@ -20,9 +21,14 @@ export interface MoviesData extends ListCardsGeneralData {
   }>;
 }
 
-export const getMovies = (type: MoviesPageType, page: number = INITIAL_PAGE) =>
+export const getMovies = (
+  type: MoviesPageType,
+  page: number = INITIAL_PAGE,
+  language = getApiLanguage(),
+) =>
   moviesApi.get(`movie/${type.split("-").join("_")}`, {
     params: {
       page,
+      language,
     },
   });

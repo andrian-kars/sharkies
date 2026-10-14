@@ -2,6 +2,7 @@ import { getApiErrorMessage } from "@/api/config";
 import { TvData, getTv } from "@/api/tvService";
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch, PayloadAction } from "@reduxjs/toolkit";
+import { getApiLanguage } from "@/i18n";
 import {
   TvPageType,
   POPULAR,
@@ -32,6 +33,7 @@ export const TvSlice = createSlice({
   name: "tv",
   initialState,
   reducers: {
+    resetLanguage: () => initialState,
     setPopular: (state, action: PayloadAction<TvData>) => {
       state[POPULAR] = action.payload;
       state.isLoading = false;
@@ -54,20 +56,22 @@ export const TvSlice = createSlice({
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
-      state.error = null;
+      if (action.payload) state.error = null;
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
-      state.error = null;
+      state.isLoading = false;
     },
   },
 });
 
 export const fetchGetTv =
   (type: TvPageType, page: number) => async (dispatch: Dispatch) => {
+    const language = getApiLanguage();
     try {
       dispatch(TvSlice.actions.setLoading(true));
-      const fetchedMovies = await getTv(type, page);
+      const fetchedMovies = await getTv(type, page, language);
+      if (language !== getApiLanguage()) return;
 
       switch (type) {
         case POPULAR:
@@ -84,6 +88,7 @@ export const fetchGetTv =
           break;
       }
     } catch (e) {
+      if (language !== getApiLanguage()) return;
       const errorMessage = getApiErrorMessage(e);
 
       dispatch(TvSlice.actions.setError(errorMessage));

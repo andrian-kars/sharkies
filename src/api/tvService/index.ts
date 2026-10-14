@@ -1,5 +1,6 @@
 import { ListCardsGeneralData, moviesApi } from "@/api/config";
 import { INITIAL_PAGE, TvPageType } from "@/constants";
+import { getApiLanguage } from "@/i18n";
 
 export interface TvData extends ListCardsGeneralData {
   results: Array<{
@@ -19,9 +20,14 @@ export interface TvData extends ListCardsGeneralData {
   }>;
 }
 
-export const getTv = (type: TvPageType, page: number = INITIAL_PAGE) =>
+export const getTv = (
+  type: TvPageType,
+  page: number = INITIAL_PAGE,
+  language = getApiLanguage(),
+) =>
   moviesApi.get(`tv/${type.split("-").join("_")}`, {
     params: {
       page,
+      language,
     },
   });
